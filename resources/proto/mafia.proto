@@ -1,0 +1,93 @@
+syntax = "proto3";
+package mafia;
+
+option go_package = "internal/pb";
+
+message Empty {}
+
+service Mafia {
+  rpc StartSession (StartSessionRequest) returns (stream SessionEvent);
+  rpc Vote (VoteRequest) returns (Empty);
+  rpc Check (CheckRequest) returns (CheckResponse);
+  rpc GetSessionState (Empty) returns (SessionState);
+}
+
+message StartSessionRequest {
+    string username = 1;
+}
+
+message VoteRequest {
+    string username = 1;
+}
+
+message ShootRequest {
+    string username = 1;
+}
+
+message CheckRequest {
+    string username = 1;
+}
+
+message CheckResponse {
+    string username = 1;
+    Role role = 2;
+}
+
+enum Role {
+    UNKNOWN_ROLE = 0;
+    MAFIA_ROLE = 1;
+    CIVILIAN = 2;
+    SHERIFF = 3;
+}
+
+enum Team {
+    UNKNOWN_TEAM = 0;
+    MAFIA = 1;
+    CIVILIANS = 2;
+}
+
+message Player {
+    Role role = 1;
+    string username = 2;
+    bool liveness = 3;
+}
+
+message SessionState {
+    Player player = 1;
+    repeated Player players = 2;
+    Team winnerTeam = 3;
+}
+
+message SessionEvent {
+
+    message SessionStartInfo {
+        Role role = 1;
+        repeated Player players = 2;
+    }
+
+    message SessionFinishInfo {
+        Team winners = 1;
+        repeated Player players = 2;
+    }
+
+    message PlayerJoinInfo {
+        string username = 1;
+    }
+
+    message PlayerLeftInfo {
+        string username = 1;
+    }
+
+    message VoteInfo {
+        string username = 1;
+    }
+
+    oneof eventInfo {
+        SessionStartInfo startInfo = 1;
+        SessionFinishInfo finishInfo = 2;
+        PlayerJoinInfo joinInfo = 3;
+        PlayerLeftInfo leftInfo = 4;
+        VoteInfo voteInfo = 5;
+    }
+
+}
