@@ -271,7 +271,7 @@ func (s *Session) UpdateState() {
 		log.Printf("game is ended: mafia wins")
 		players := s.GetAllPlayers()
 		event := pb.SessionEvent_SessionFinishInfo{
-			Winners: pb.Team_CIVILIANS,
+			Winners: pb.Team_MAFIA,
 			Players: players,
 		}
 		info := pb.SessionEvent_FinishInfo{FinishInfo: &event}

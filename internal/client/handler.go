@@ -9,12 +9,14 @@ import (
 type Handler struct {
 	client    *Client
 	messenger *Messenger
+	state     int
 }
 
 func NewHandler(client *Client, messenger *Messenger) *Handler {
 	return &Handler{
 		client:    client,
 		messenger: messenger,
+		state:     0,
 	}
 }
 
@@ -71,6 +73,7 @@ func (h *Handler) getState() {
 }
 
 func (h *Handler) handleEvents() {
+	h.handleHelp()
 	for {
 		event := <-h.client.events
 
@@ -106,6 +109,7 @@ func (h *Handler) handleStart(info *pb.SessionEvent_SessionStartInfo) {
 		str += "\n" + PlayerToString(player) + "\n"
 	}
 	h.sendOutput(str)
+	h.updateState()
 }
 
 func (h *Handler) handleLeft(info *pb.SessionEvent_PlayerLeftInfo) {
@@ -113,7 +117,38 @@ func (h *Handler) handleLeft(info *pb.SessionEvent_PlayerLeftInfo) {
 }
 
 func (h *Handler) handleVote(info *pb.SessionEvent_VoteInfo) {
-	h.sendOutput(fmt.Sprintf("Player %s was voted", info.Username))
+
+	if h.state%2 == 1 {
+		h.sendOutput(fmt.Sprintf("Player %s was killed by mafia", info.Username))
+	} else {
+		h.sendOutput(fmt.Sprintf("Player %s was voted", info.Username))
+	}
+
+	h.updateState()
+}
+
+func (h *Handler) updateState() {
+	h.state++
+	if h.state%2 == 1 {
+		h.sendOutput(fmt.Sprintf("%d night: mafia should vote and sheriff should check", h.state/2+1))
+	} else {
+		h.sendOutput(fmt.Sprintf("%d day: all should vote", h.state/2+1))
+	}
+
+}
+
+func (h *Handler) handleHelp() {
+	str := `
+usage:
+        
+    get_state - get current state
+
+    check - check role of player (allowed only for sheriff during night)
+
+    vote - vote for jailing or killing player (jailing allowed only during day, killing - during night for mafia)
+
+`
+	h.sendOutput(str)
 }
 
 func (h *Handler) handleFinish(info *pb.SessionEvent_SessionFinishInfo) {
@@ -151,5 +186,5 @@ func RoleToString(role pb.Role) string {
 }
 
 func PlayerToString(player *pb.Player) string {
-	return fmt.Sprintf("player %s, role: %s, alive: %d", player.Username, RoleToString(player.Role), player.Liveness)
+	return fmt.Sprintf("player %s, role: %s, alive: %t", player.Username, RoleToString(player.Role), player.Liveness)
 }
