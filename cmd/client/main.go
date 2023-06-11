@@ -13,7 +13,7 @@ import (
 )
 
 func main() {
-	address := "0.0.0.0:9000"
+	address := "dns:///mafiaserver:9000"
 
 	ctx, cancel := context.WithCancel(context.Background())
 	stop := make(chan os.Signal, 1)
